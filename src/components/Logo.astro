@@ -1,0 +1,24 @@
+---
+/**
+ * The MK monogram: the M's right leg doubles as the K's upright. Same geometry
+ * as public/favicon.svg, but coloured from the theme tokens so it follows
+ * light and dark mode. The favicon keeps fixed colours, since browser chrome
+ * does not know about the site's theme.
+ */
+interface Props {
+  class?: string;
+}
+
+const { class: className = 'h-7 w-7' } = Astro.props;
+---
+
+<svg viewBox="0 0 64 64" class={className} aria-hidden="true" focusable="false">
+  <rect width="64" height="64" rx="14" class="fill-accent"></rect>
+  <path
+    d="M13 46L13 18L24 37L35 18L35 46M35 32L51 18M35 32L51 46"
+    fill="none"
+    class="stroke-accent-fg"
+    stroke-width="6"
+    stroke-linecap="round"
+    stroke-linejoin="round"></path>
+</svg>
