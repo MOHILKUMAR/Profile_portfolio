@@ -78,5 +78,6 @@
   "contact.emailBody": "Hi Mohil,\n\nI came across your portfolio and would like to talk about a project.\n\n",
   "contact.copy": "Copy",
   "contact.copied": "Copied",
-  "contact.copyLabel": "Copy email address"
+  "contact.copyLabel": "Copy email address",
+  "contact.copyManual": "Press Ctrl+C"
 }
