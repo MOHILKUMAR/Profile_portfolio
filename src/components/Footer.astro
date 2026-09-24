@@ -1,0 +1,58 @@
+---
+import { readEnv } from '../lib/env';
+import { localizePath, useTranslations, type Locale } from '../i18n/utils';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+
+const year = new Date().getFullYear();
+const email = readEnv('PUBLIC_CONTACT_EMAIL');
+const github = readEnv('PUBLIC_GITHUB_URL');
+const linkedin = readEnv('PUBLIC_LINKEDIN_URL');
+
+const socials = [
+  github ? { label: 'GitHub', href: github } : null,
+  linkedin ? { label: 'LinkedIn', href: linkedin } : null,
+  email ? { label: t('contact.emailLabel'), href: `mailto:${email}` } : null,
+].filter((item): item is { label: string; href: string } => item !== null);
+---
+
+<footer class="border-t border-line bg-surface">
+  <div class="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-10 sm:px-6 md:flex-row md:items-center md:justify-between">
+    <div class="space-y-1">
+      <p class="text-sm font-semibold text-fg">{t('site.title')}</p>
+      <p class="text-sm text-muted">
+        &copy; {year} {t('site.title')}. {t('footer.rights')}
+      </p>
+    </div>
+
+    <div class="flex flex-col gap-3 md:items-end">
+      {
+        socials.length > 0 && (
+          <ul class="flex flex-wrap gap-4">
+            {socials.map((social) => (
+              <li>
+                <a
+                  href={social.href}
+                  rel={social.href.startsWith('mailto:') ? undefined : 'noopener noreferrer me'}
+                  target={social.href.startsWith('mailto:') ? undefined : '_blank'}
+                  class="text-sm font-medium text-muted underline-offset-4 hover:text-accent hover:underline"
+                >
+                  {social.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+      <p class="text-xs text-muted">{t('footer.builtWith')}</p>
+      <a href={localizePath('/admin', 'en')} class="text-xs text-muted underline-offset-4 hover:text-accent hover:underline">
+        Admin
+      </a>
+    </div>
+  </div>
+</footer>

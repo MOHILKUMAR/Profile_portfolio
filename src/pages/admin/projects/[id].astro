@@ -1,0 +1,68 @@
+---
+import Admin from '../../../layouts/Admin.astro';
+import ProjectForm from '../../../components/ProjectForm.astro';
+import { getProjectById } from '../../../lib/projects';
+
+const { id } = Astro.params;
+const project = id ? await getProjectById(Astro.locals.supabase, id) : null;
+
+if (!project) {
+  return Astro.redirect('/admin', 302);
+}
+
+const error = Astro.url.searchParams.get('error');
+---
+
+<Admin title={`Edit ${project.title}`}>
+  <a href="/admin" class="text-sm text-muted underline-offset-4 hover:text-accent hover:underline">
+    Back to projects
+  </a>
+
+  <div class="mt-4 mb-8 flex flex-wrap items-center justify-between gap-4">
+    <h1 class="text-2xl font-semibold tracking-tight">Edit project</h1>
+    <a
+      href={`/projects/${project.slug}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="text-sm text-muted underline-offset-4 hover:text-accent hover:underline"
+    >
+      View public page
+    </a>
+  </div>
+
+  <ProjectForm
+    project={project}
+    action={`/api/admin/projects/${project.id}`}
+    submitLabel="Save changes"
+    error={error}
+  />
+
+  <div class="mt-12 rounded-xl border border-negative bg-surface p-5">
+    <h2 class="text-sm font-semibold text-fg">Delete this project</h2>
+    <p class="mt-1 text-sm text-muted">
+      Removes the project and its uploaded photo. This cannot be undone.
+    </p>
+    <form
+      method="post"
+      action={`/api/admin/projects/${project.id}`}
+      class="mt-4"
+      data-confirm={`Delete "${project.title}"? This cannot be undone.`}
+    >
+      <input type="hidden" name="_action" value="delete" />
+      <button
+        type="submit"
+        class="rounded-lg border border-negative px-4 py-2 text-sm font-semibold text-negative transition-colors hover:bg-negative hover:text-bg"
+      >
+        Delete project
+      </button>
+    </form>
+  </div>
+</Admin>
+
+<script>
+  document.querySelectorAll<HTMLFormElement>('form[data-confirm]').forEach((form) => {
+    form.addEventListener('submit', (event) => {
+      if (!window.confirm(form.dataset.confirm ?? 'Are you sure?')) event.preventDefault();
+    });
+  });
+</script>

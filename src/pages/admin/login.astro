@@ -1,0 +1,107 @@
+---
+import Admin from '../../layouts/Admin.astro';
+
+// Already signed in and allowed through, skip straight to the dashboard.
+if (Astro.locals.user && Astro.locals.isAdmin) {
+  return Astro.redirect('/admin', 302);
+}
+
+const params = Astro.url.searchParams;
+const sent = params.get('sent') === '1';
+
+// Naming the address that actually signed in is the fastest way to spot the
+// usual cause: add-admin.sql was run with a different one.
+const signedInEmail = Astro.locals.user?.email ?? null;
+
+const ERRORS: Record<string, string> = {
+  not_admin: signedInEmail
+    ? `Signed in as ${signedInEmail}, but that address has no row in the admins table, so it cannot make changes. Run supabase/add-admin.sql with this exact address, then reload.`
+    : 'That account has no row in the admins table. Run supabase/add-admin.sql with its address.',
+  rate_limited:
+    'Supabase is throttling sign-in emails. Its built-in sender allows only a few per hour. Wait for the hour to pass, or configure custom SMTP under Project Settings > Authentication to lift the limit.',
+  no_email: 'Enter the email address linked to your Supabase user.',
+  send_failed: 'Could not send the sign-in link. Check the Supabase auth settings and try again.',
+  link_invalid: 'That sign-in link is invalid or has already been used. Request a fresh one.',
+  link_expired: 'That sign-in link has expired. Request a fresh one.',
+};
+const error = params.get('error');
+const errorMessage = error ? (ERRORS[error] ?? 'Something went wrong. Try again.') : null;
+const showSignOut = error === 'not_admin' && signedInEmail !== null;
+---
+
+<Admin title="Sign in" bare>
+  <div class="mx-auto max-w-sm py-12">
+    <h1 class="text-2xl font-semibold tracking-tight">Admin sign in</h1>
+    <p class="mt-2 text-sm leading-relaxed text-muted">
+      Enter your email and we will send a one time sign-in link. Only addresses already registered as
+      Supabase users can sign in.
+    </p>
+
+    {
+      errorMessage && (
+        <p
+          role="alert"
+          class="mt-6 rounded-lg border border-negative bg-surface px-4 py-3 text-sm text-negative"
+        >
+          {errorMessage}
+        </p>
+      )
+    }
+
+    {
+      showSignOut && (
+        <form method="post" action="/api/admin/logout" class="mt-3">
+          <button
+            type="submit"
+            class="text-sm font-medium text-accent underline-offset-4 hover:underline"
+          >
+            Sign out and use a different address
+          </button>
+        </form>
+      )
+    }
+
+    {
+      sent ? (
+        <div class="mt-6 rounded-lg border border-line bg-surface p-5">
+          <p class="text-sm font-medium text-fg">Check your inbox.</p>
+          <p class="mt-2 text-sm leading-relaxed text-muted">
+            If that address belongs to a registered user, a sign-in link is on its way. The link works once
+            and expires shortly.
+          </p>
+          <a href="/admin/login" class="mt-4 inline-block text-sm font-medium text-accent underline-offset-4 hover:underline">
+            Use a different address
+          </a>
+        </div>
+      ) : (
+        <form method="post" action="/api/admin/login" class="mt-6 space-y-4">
+          <div>
+            <label for="email" class="block text-sm font-medium text-fg">
+              Email
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              autocomplete="email"
+              autofocus
+              class="mt-1.5 w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-fg placeholder:text-muted focus:border-accent focus:outline-none"
+              placeholder="you@example.com"
+            />
+          </div>
+          <button
+            type="submit"
+            class="w-full rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-accent-fg transition-colors hover:bg-accent-hover"
+          >
+            Send sign-in link
+          </button>
+        </form>
+      )
+    }
+
+    <a href="/" class="mt-8 inline-block text-sm text-muted underline-offset-4 hover:text-accent hover:underline">
+      Back to site
+    </a>
+  </div>
+</Admin>

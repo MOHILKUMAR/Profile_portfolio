@@ -1,0 +1,60 @@
+---
+import {
+  LOCALES,
+  LOCALE_NAMES,
+  LOCALE_TAGS,
+  localizePath,
+  stripLocale,
+  useTranslations,
+  type Locale,
+} from '../i18n/utils';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+
+// Keep the visitor on the same page when they switch language.
+const basePath = stripLocale(Astro.url.pathname);
+---
+
+<details class="relative" data-dropdown>
+  <summary
+    class="flex h-9 cursor-pointer list-none items-center gap-1.5 rounded-md border border-line px-2.5 text-sm font-medium text-muted hover:text-fg"
+    aria-label={t('lang.label')}
+  >
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18z" />
+    </svg>
+    <span class="uppercase">{locale}</span>
+  </summary>
+
+  <ul class="absolute right-0 z-50 mt-2 w-40 rounded-lg border border-line bg-surface p-1 shadow-lg">
+    {
+      LOCALES.map((option) => (
+        <li>
+          <a
+            href={localizePath(basePath, option)}
+            hreflang={LOCALE_TAGS[option]}
+            lang={LOCALE_TAGS[option]}
+            aria-current={option === locale ? 'true' : undefined}
+            class:list={[
+              'flex items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-surface-2',
+              option === locale ? 'font-semibold text-accent' : 'text-fg',
+            ]}
+          >
+            {LOCALE_NAMES[option]}
+            {option === locale && (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m5 13 4 4L19 7" />
+              </svg>
+            )}
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</details>

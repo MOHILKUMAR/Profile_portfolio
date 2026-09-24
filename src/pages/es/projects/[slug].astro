@@ -1,0 +1,13 @@
+---
+import ProjectDetail from '../../../components/pages/ProjectDetail.astro';
+import { getPublishedProjectBySlug } from '../../../lib/projects';
+
+const { slug } = Astro.params;
+const project = slug ? await getPublishedProjectBySlug(Astro.locals, slug) : null;
+
+// A failed read is an outage, not a missing page: 503 tells crawlers to come
+// back later instead of dropping the URL. Only a clean miss is a real 404.
+if (!project) Astro.response.status = Astro.locals.degraded ? 503 : 404;
+---
+
+<ProjectDetail locale="es" project={project} />

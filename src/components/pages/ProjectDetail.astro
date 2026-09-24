@@ -1,0 +1,128 @@
+---
+import Base from '../../layouts/Base.astro';
+import { localizeProject, type Project } from '../../lib/projects';
+import { localizePath, LOCALE_TAGS, useTranslations, type Locale } from '../../i18n/utils';
+
+interface Props {
+  locale: Locale;
+  project: Project | null;
+}
+
+const { locale, project: raw } = Astro.props;
+const t = useTranslations(locale);
+const project = raw ? localizeProject(raw, locale) : null;
+const unavailable = Astro.locals.degraded;
+
+const paragraphs = project?.description ? project.description.split(/\n{2,}/).filter(Boolean) : [];
+
+const added = project
+  ? new Intl.DateTimeFormat(LOCALE_TAGS[locale], { year: 'numeric', month: 'long' }).format(
+      new Date(project.created_at),
+    )
+  : '';
+---
+
+{
+  project === null ? (
+    <Base locale={locale} title={unavailable ? t('project.unavailableTitle') : t('project.notFoundTitle')}>
+      <div class="mx-auto max-w-3xl px-4 py-24 text-center sm:px-6">
+        <h1 class="text-3xl font-bold tracking-tight text-fg">
+          {unavailable ? t('project.unavailableTitle') : t('project.notFoundTitle')}
+        </h1>
+        <p class="mt-3 text-muted">{unavailable ? t('project.unavailableBody') : t('project.notFoundBody')}</p>
+        <a
+          href={localizePath('/projects', locale)}
+          class="mt-8 inline-block rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-accent-fg hover:bg-accent-hover"
+        >
+          {t('project.back')}
+        </a>
+      </div>
+    </Base>
+  ) : (
+    <Base
+      locale={locale}
+      title={project.title}
+      description={project.summary || t('site.description')}
+      ogImage={project.image_url}
+      activeNav="work"
+    >
+      <article class="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
+        <a
+          href={localizePath('/projects', locale)}
+          class="inline-flex items-center gap-1.5 text-sm font-medium text-muted underline-offset-4 hover:text-accent hover:underline"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          {t('project.back')}
+        </a>
+
+        <header class="mt-6">
+          <h1 class="text-3xl font-bold leading-tight tracking-tight text-fg sm:text-4xl">{project.title}</h1>
+          {project.summary && <p class="mt-4 text-lg leading-relaxed text-muted">{project.summary}</p>}
+
+          <div class="mt-6 flex flex-wrap gap-3">
+            {project.host_url && (
+              <a
+                href={project.host_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-fg transition-colors hover:bg-accent-hover"
+              >
+                {t('project.visitSite')}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7 17 17 7M9 7h8v8" />
+                </svg>
+              </a>
+            )}
+            {project.repo_url && (
+              <a
+                href={project.repo_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-1.5 rounded-lg border border-line px-4 py-2 text-sm font-semibold text-fg transition-colors hover:bg-surface-2"
+              >
+                {t('project.viewSource')}
+              </a>
+            )}
+          </div>
+        </header>
+
+        {project.image_url && (
+          <img
+            src={project.image_url}
+            alt={project.title}
+            width="1280"
+            height="800"
+            decoding="async"
+            class="mt-10 w-full rounded-xl border border-line bg-surface-2 object-cover"
+          />
+        )}
+
+        {paragraphs.length > 0 && (
+          <div class="prose-plain mt-10 text-base text-fg">
+            {paragraphs.map((paragraph) => (
+              <p>{paragraph}</p>
+            ))}
+          </div>
+        )}
+
+        <footer class="mt-12 border-t border-line pt-6">
+          {project.tech.length > 0 && (
+            <div>
+              <h2 class="text-xs font-medium uppercase tracking-wide text-muted">{t('project.tech')}</h2>
+              <ul class="mt-3 flex flex-wrap gap-2">
+                {project.tech.map((tech) => (
+                  <li class="rounded-md border border-line bg-surface px-2.5 py-1 text-sm text-fg">{tech}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <p class="mt-6 text-sm text-muted">
+            {t('project.added')}: {added}
+          </p>
+        </footer>
+      </article>
+    </Base>
+  )
+}

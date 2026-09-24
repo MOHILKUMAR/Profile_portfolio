@@ -1,0 +1,104 @@
+---
+import '../styles/global.css';
+import { Font } from 'astro:assets';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { readEnv } from '../lib/env';
+import {
+  LOCALES,
+  LOCALE_TAGS,
+  localizePath,
+  stripLocale,
+  useTranslations,
+  type Locale,
+} from '../i18n/utils';
+
+interface Props {
+  locale: Locale;
+  title?: string;
+  description?: string;
+  activeNav?: 'work' | 'play' | null;
+  /** Absolute URL. Project pages pass their own photo. */
+  ogImage?: string | null;
+}
+
+const { locale, title, description, activeNav = null, ogImage = null } = Astro.props;
+const t = useTranslations(locale);
+
+const pageTitle = title ? `${title} | ${t('site.title')}` : `${t('site.title')} | ${t('site.role')}`;
+const pageDescription = description ?? t('site.description');
+
+const basePath = stripLocale(Astro.url.pathname);
+const siteOrigin = Astro.site ?? new URL(Astro.url.origin);
+const canonical = new URL(localizePath(basePath, locale), siteOrigin);
+
+// A project photo wins, otherwise the shared default if one is configured.
+const socialImage = ogImage ?? readEnv('PUBLIC_OG_IMAGE') ?? null;
+const socialImageUrl = socialImage ? new URL(socialImage, siteOrigin).href : null;
+---
+
+<!doctype html>
+<html lang={LOCALE_TAGS[locale]}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDescription} />
+    <link rel="canonical" href={canonical.href} />
+
+    {
+      LOCALES.map((alt) => (
+        <link
+          rel="alternate"
+          hreflang={LOCALE_TAGS[alt]}
+          href={new URL(localizePath(basePath, alt), siteOrigin).href}
+        />
+      ))
+    }
+    <link rel="alternate" hreflang="x-default" href={new URL(localizePath(basePath, 'en'), siteOrigin).href} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={pageDescription} />
+    <meta property="og:url" content={canonical.href} />
+    <meta property="og:locale" content={LOCALE_TAGS[locale].replace('-', '_')} />
+    {socialImageUrl && <meta property="og:image" content={socialImageUrl} />}
+    <meta name="twitter:card" content={socialImageUrl ? 'summary_large_image' : 'summary'} />
+    {socialImageUrl && <meta name="twitter:image" content={socialImageUrl} />}
+
+    <Font cssVariable="--font-outfit" preload />
+    <Font cssVariable="--font-devanagari" />
+
+    {/* Runs before first paint so a pinned theme never flashes the wrong one. */}
+    <script is:inline>
+      (function () {
+        try {
+          var stored = localStorage.getItem('theme');
+          if (stored === 'light' || stored === 'dark') {
+            document.documentElement.setAttribute('data-theme', stored);
+          }
+        } catch (err) {
+          /* Storage blocked, fall back to the system preference. */
+        }
+      })();
+    </script>
+  </head>
+
+  <body class="min-h-dvh flex flex-col antialiased">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-md focus:bg-accent focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-accent-fg"
+    >
+      {t('nav.skipToContent')}
+    </a>
+
+    <Header locale={locale} activeNav={activeNav} />
+
+    <main id="main" class="flex-1">
+      <slot />
+    </main>
+
+    <Footer locale={locale} />
+  </body>
+</html>

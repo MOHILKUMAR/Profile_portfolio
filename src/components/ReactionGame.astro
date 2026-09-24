@@ -1,0 +1,292 @@
+---
+import { useTranslations, type Locale } from '../i18n/utils';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+
+const TOTAL_ROUNDS = 5;
+
+// The client script cannot read Astro frontmatter, so the copy travels as JSON.
+const strings = {
+  instructions: t('play.instructions'),
+  waiting: t('play.waiting'),
+  go: t('play.go'),
+  tooSoon: t('play.tooSoon'),
+  roundOf: t('play.roundOf'),
+  average: t('play.average'),
+  best: t('play.best'),
+  personalBest: t('play.personalBest'),
+  newBest: t('play.newBest'),
+  again: t('play.again'),
+  unit: t('play.unit'),
+  verdictFast: t('play.verdictFast'),
+  verdictMid: t('play.verdictMid'),
+  verdictSlow: t('play.verdictSlow'),
+};
+---
+
+<section
+  class="rounded-2xl border border-line bg-surface p-5 sm:p-8"
+  data-reaction-game
+  data-rounds={TOTAL_ROUNDS}
+  data-strings={JSON.stringify(strings)}
+>
+  <div class="mb-4 flex items-baseline justify-between gap-4">
+    <p class="text-sm font-medium text-muted" data-round-label>
+      {t('play.roundOf', { current: 1, total: TOTAL_ROUNDS })}
+    </p>
+    <p class="text-sm text-muted" data-personal-best></p>
+  </div>
+
+  <button
+    type="button"
+    data-tile
+    class="flex min-h-56 w-full cursor-pointer select-none flex-col items-center justify-center gap-2 rounded-xl border-2 border-line bg-surface-2 p-6 text-center transition-colors sm:min-h-72"
+  >
+    <span class="text-2xl font-semibold text-fg sm:text-3xl" data-tile-title>{t('play.instructions')}</span>
+    <span class="text-sm text-muted" data-tile-hint>{t('play.start')}</span>
+  </button>
+
+  <p class="sr-only" role="status" aria-live="polite" data-live>{t('play.srStatus')}</p>
+
+  <ol class="mt-5 flex flex-wrap gap-2" data-rounds-list aria-hidden="true"></ol>
+
+  <div class="mt-5 hidden" data-summary>
+    <div class="flex flex-wrap gap-6 rounded-xl border border-line bg-surface-2 p-5">
+      <div>
+        <p class="text-xs font-medium uppercase tracking-wide text-muted">{t('play.average')}</p>
+        <p class="text-3xl font-semibold text-fg" data-summary-average></p>
+      </div>
+      <div>
+        <p class="text-xs font-medium uppercase tracking-wide text-muted">{t('play.best')}</p>
+        <p class="text-3xl font-semibold text-fg" data-summary-best></p>
+      </div>
+      <div class="flex-1 min-w-48">
+        <p class="text-xs font-medium uppercase tracking-wide text-muted">&nbsp;</p>
+        <p class="text-sm leading-relaxed text-muted" data-summary-verdict></p>
+      </div>
+    </div>
+
+    <div class="mt-4 flex flex-wrap gap-3">
+      <button
+        type="button"
+        data-replay
+        class="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-fg transition-colors hover:bg-accent-hover"
+      >
+        {t('play.again')}
+      </button>
+      <button
+        type="button"
+        data-reset-best
+        class="rounded-lg border border-line px-4 py-2 text-sm font-medium text-muted transition-colors hover:text-fg"
+      >
+        {t('play.reset')}
+      </button>
+    </div>
+  </div>
+</section>
+
+<script>
+  type Phase = 'idle' | 'waiting' | 'go' | 'scored' | 'tooSoon' | 'done';
+
+  const STORAGE_KEY = 'reaction-best-ms';
+  const MIN_DELAY = 1200;
+  const MAX_DELAY = 3500;
+
+  const root = document.querySelector<HTMLElement>('[data-reaction-game]');
+  if (root) {
+    const strings = JSON.parse(root.dataset.strings ?? '{}') as Record<string, string>;
+    const totalRounds = Number(root.dataset.rounds ?? 5);
+
+    const tile = root.querySelector<HTMLButtonElement>('[data-tile]')!;
+    const tileTitle = root.querySelector<HTMLElement>('[data-tile-title]')!;
+    const tileHint = root.querySelector<HTMLElement>('[data-tile-hint]')!;
+    const roundLabel = root.querySelector<HTMLElement>('[data-round-label]')!;
+    const roundsList = root.querySelector<HTMLElement>('[data-rounds-list]')!;
+    const personalBestEl = root.querySelector<HTMLElement>('[data-personal-best]')!;
+    const live = root.querySelector<HTMLElement>('[data-live]')!;
+    const summary = root.querySelector<HTMLElement>('[data-summary]')!;
+    const summaryAverage = root.querySelector<HTMLElement>('[data-summary-average]')!;
+    const summaryBest = root.querySelector<HTMLElement>('[data-summary-best]')!;
+    const summaryVerdict = root.querySelector<HTMLElement>('[data-summary-verdict]')!;
+    const replayButton = root.querySelector<HTMLButtonElement>('[data-replay]')!;
+    const resetBestButton = root.querySelector<HTMLButtonElement>('[data-reset-best]')!;
+
+    const TILE_BASE =
+      'flex min-h-56 w-full cursor-pointer select-none flex-col items-center justify-center gap-2 rounded-xl border-2 p-6 text-center transition-colors sm:min-h-72';
+    const TILE_SKINS: Record<Phase, string> = {
+      idle: 'border-line bg-surface-2',
+      waiting: 'border-line-strong bg-surface-2',
+      go: 'border-accent bg-accent',
+      scored: 'border-line bg-surface-2',
+      tooSoon: 'border-negative bg-surface-2',
+      done: 'border-line bg-surface-2',
+    };
+    const TITLE_SKINS: Record<Phase, string> = {
+      idle: 'text-fg',
+      waiting: 'text-muted',
+      go: 'text-accent-fg',
+      scored: 'text-fg',
+      tooSoon: 'text-negative',
+      done: 'text-fg',
+    };
+
+    let phase: Phase = 'idle';
+    let round = 0;
+    let times: number[] = [];
+    let timer: number | undefined;
+    let startedAt = 0;
+
+    const format = (ms: number) => `${Math.round(ms)} ${strings.unit}`;
+
+    const readBest = (): number | null => {
+      try {
+        const raw = Number(localStorage.getItem(STORAGE_KEY));
+        return Number.isFinite(raw) && raw > 0 ? raw : null;
+      } catch {
+        return null;
+      }
+    };
+
+    const writeBest = (ms: number) => {
+      try {
+        localStorage.setItem(STORAGE_KEY, String(Math.round(ms)));
+      } catch {
+        /* Storage blocked, the score just does not persist. */
+      }
+    };
+
+    const renderPersonalBest = () => {
+      const best = readBest();
+      personalBestEl.textContent = best ? `${strings.personalBest}: ${format(best)}` : '';
+    };
+
+    const setPhase = (next: Phase, title: string, hint: string) => {
+      phase = next;
+      tile.className = `${TILE_BASE} ${TILE_SKINS[next]}`;
+      tileTitle.className = `text-2xl font-semibold sm:text-3xl ${TITLE_SKINS[next]}`;
+      tileTitle.textContent = title;
+      tileHint.textContent = hint;
+      tileHint.className = next === 'go' ? 'text-sm text-accent-fg/80' : 'text-sm text-muted';
+      live.textContent = `${title}. ${hint}`;
+    };
+
+    const renderRounds = () => {
+      roundsList.innerHTML = '';
+      times.forEach((ms) => {
+        const item = document.createElement('li');
+        item.className = 'rounded-md border border-line px-2.5 py-1 text-xs font-medium text-muted';
+        item.textContent = format(ms);
+        roundsList.appendChild(item);
+      });
+    };
+
+    const updateRoundLabel = () => {
+      const current = Math.min(round + 1, totalRounds);
+      roundLabel.textContent = (strings.roundOf ?? '')
+        .split('{current}')
+        .join(String(current))
+        .split('{total}')
+        .join(String(totalRounds));
+    };
+
+    const armRound = () => {
+      setPhase('waiting', strings.waiting, '');
+      const delay = MIN_DELAY + Math.random() * (MAX_DELAY - MIN_DELAY);
+      timer = window.setTimeout(() => {
+        startedAt = performance.now();
+        setPhase('go', strings.go, '');
+      }, delay);
+    };
+
+    const finish = () => {
+      const average = times.reduce((sum, ms) => sum + ms, 0) / times.length;
+      const best = Math.min(...times);
+      const previousBest = readBest();
+      const isNewBest = previousBest === null || best < previousBest;
+      if (isNewBest) writeBest(best);
+
+      summaryAverage.textContent = format(average);
+      summaryBest.textContent = format(best);
+
+      const verdict =
+        average < 230 ? strings.verdictFast : average < 320 ? strings.verdictMid : strings.verdictSlow;
+      summaryVerdict.textContent = isNewBest ? `${strings.newBest} ${verdict}` : verdict;
+
+      summary.classList.remove('hidden');
+      renderPersonalBest();
+      setPhase('done', format(average), strings.average);
+      live.textContent = `${strings.average}: ${format(average)}. ${verdict}`;
+    };
+
+    const handleTile = () => {
+      switch (phase) {
+        case 'idle':
+        case 'scored':
+          armRound();
+          break;
+
+        case 'waiting':
+          window.clearTimeout(timer);
+          setPhase('tooSoon', strings.tooSoon, strings.instructions);
+          break;
+
+        case 'go': {
+          const elapsed = performance.now() - startedAt;
+          times.push(elapsed);
+          round += 1;
+          renderRounds();
+          updateRoundLabel();
+          if (round >= totalRounds) finish();
+          else setPhase('scored', format(elapsed), strings.instructions);
+          break;
+        }
+
+        case 'tooSoon':
+          armRound();
+          break;
+
+        case 'done':
+          break;
+      }
+    };
+
+    const reset = () => {
+      window.clearTimeout(timer);
+      round = 0;
+      times = [];
+      summary.classList.add('hidden');
+      renderRounds();
+      updateRoundLabel();
+      setPhase('idle', strings.instructions, '');
+    };
+
+    // The tile is a real button, so Space and Enter activate it natively once it
+    // has focus. There is deliberately no document level key handler: swallowing
+    // Space across the whole page would break scrolling with the keyboard.
+    tile.addEventListener('click', () => {
+      // Safari does not focus a button when it is clicked, so without this the
+      // keyboard would stop working for the rounds after the first.
+      tile.focus();
+      handleTile();
+    });
+
+    replayButton.addEventListener('click', reset);
+
+    resetBestButton.addEventListener('click', () => {
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch {
+        /* Nothing to clear. */
+      }
+      renderPersonalBest();
+    });
+
+    renderPersonalBest();
+    updateRoundLabel();
+  }
+</script>

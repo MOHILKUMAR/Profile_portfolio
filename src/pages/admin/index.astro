@@ -1,0 +1,110 @@
+---
+import Admin from '../../layouts/Admin.astro';
+import { listAllProjects } from '../../lib/projects';
+
+const projects = await listAllProjects(Astro.locals.supabase);
+
+const params = Astro.url.searchParams;
+const flash = params.get('saved')
+  ? 'Project saved.'
+  : params.get('created')
+    ? 'Project created.'
+    : params.get('deleted')
+      ? 'Project deleted.'
+      : null;
+
+const publishedCount = projects.filter((project) => project.published).length;
+---
+
+<Admin title="Projects">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-semibold tracking-tight">Projects</h1>
+      <p class="mt-1 text-sm text-muted">
+        {projects.length} total, {publishedCount} published.
+      </p>
+    </div>
+    <a
+      href="/admin/projects/new"
+      class="rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-accent-fg transition-colors hover:bg-accent-hover"
+    >
+      New project
+    </a>
+  </div>
+
+  {
+    flash && (
+      <p role="status" class="mt-6 rounded-lg border border-line bg-surface px-4 py-3 text-sm text-positive">
+        {flash}
+      </p>
+    )
+  }
+
+  {
+    projects.length === 0 ? (
+      <p class="mt-8 rounded-xl border border-dashed border-line bg-surface p-10 text-center text-muted">
+        No projects yet. Create your first one to see it on the public site.
+      </p>
+    ) : (
+      <ul class="mt-8 divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
+        {projects.map((project) => (
+          <li class="flex items-center gap-4 p-4">
+            {project.image_url ? (
+              <img
+                src={project.image_url}
+                alt=""
+                width="80"
+                height="56"
+                loading="lazy"
+                class="h-14 w-20 shrink-0 rounded-md border border-line object-cover"
+              />
+            ) : (
+              <div class="flex h-14 w-20 shrink-0 items-center justify-center rounded-md border border-line bg-surface-2 text-lg font-semibold text-muted">
+                {project.title.charAt(0).toUpperCase()}
+              </div>
+            )}
+
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm font-semibold text-fg">{project.title}</p>
+              <p class="truncate text-xs text-muted">/projects/{project.slug}</p>
+              <div class="mt-1.5 flex flex-wrap gap-1.5">
+                <span
+                  class:list={[
+                    'rounded border px-1.5 py-0.5 text-[11px] font-medium uppercase tracking-wide',
+                    project.published ? 'border-line text-positive' : 'border-line text-muted',
+                  ]}
+                >
+                  {project.published ? 'Published' : 'Draft'}
+                </span>
+                {project.featured && (
+                  <span class="rounded border border-accent px-1.5 py-0.5 text-[11px] font-medium uppercase tracking-wide text-accent">
+                    Featured
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div class="flex shrink-0 items-center gap-3">
+              {project.host_url && (
+                <a
+                  href={project.host_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="hidden text-sm text-muted underline-offset-4 hover:text-accent hover:underline sm:inline"
+                >
+                  Live
+                </a>
+              )}
+              <a
+                href={`/admin/projects/${project.id}`}
+                class="rounded-md border border-line px-3 py-1.5 text-sm font-medium text-fg transition-colors hover:bg-surface-2"
+              >
+                Edit
+              </a>
+            </div>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</Admin>

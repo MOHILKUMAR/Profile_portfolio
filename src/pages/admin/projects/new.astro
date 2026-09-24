@@ -1,0 +1,16 @@
+---
+import Admin from '../../../layouts/Admin.astro';
+import ProjectForm from '../../../components/ProjectForm.astro';
+
+const error = Astro.url.searchParams.get('error');
+---
+
+<Admin title="New project">
+  <a href="/admin" class="text-sm text-muted underline-offset-4 hover:text-accent hover:underline">
+    Back to projects
+  </a>
+
+  <h1 class="mt-4 mb-8 text-2xl font-semibold tracking-tight">New project</h1>
+
+  <ProjectForm action="/api/admin/projects" submitLabel="Create project" error={error} />
+</Admin>
