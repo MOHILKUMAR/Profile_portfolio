@@ -11,11 +11,12 @@ function isGuarded(pathname: string): boolean {
 }
 
 /**
- * Public pages are the same for everyone, so they can be cached. 60s in the
- * browser, 5 minutes at the edge, and up to an hour serving the old copy while
- * a fresh one is fetched. Publishing an edit takes up to a minute to show.
+ * Public pages are the same for everyone, so Vercel's CDN may keep a copy for
+ * 60 seconds, then keep serving it for up to 10 minutes while a fresh one is
+ * fetched in the background. Browsers always check back with the CDN rather
+ * than holding their own copy, so a published edit shows within about a minute.
  */
-const PUBLIC_CACHE = 'public, max-age=60, s-maxage=300, stale-while-revalidate=3600';
+const PUBLIC_CACHE = 'public, max-age=0, s-maxage=60, stale-while-revalidate=600';
 
 async function withCacheHeaders(
   pathname: string,

@@ -10,18 +10,15 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "deploy": "astro build && wrangler deploy",
-    "check": "astro check",
-    "cf-typegen": "wrangler types"
+    "check": "astro check"
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^14.3.3",
+    "@astrojs/vercel": "^11.0.11",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.0",
     "@tailwindcss/vite": "^4.3.3",
     "astro": "^7.3.4",
-    "tailwindcss": "^4.3.3",
-    "wrangler": "^4.136.3"
+    "tailwindcss": "^4.3.3"
   },
   "allowScripts": {
     "esbuild": true

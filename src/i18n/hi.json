@@ -65,7 +65,7 @@
   "lang.en": "English",
   "lang.hi": "हिन्दी",
   "lang.es": "Español",
-  "footer.builtWith": "Built with Astro and Supabase. Running on Cloudflare Workers.",
+  "footer.builtWith": "Built with Astro and Supabase. Hosted on Vercel.",
   "footer.rights": "All rights reserved.",
   "notFound.title": "Page not found",
   "notFound.body": "The page you were after does not exist.",

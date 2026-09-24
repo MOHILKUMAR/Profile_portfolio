@@ -1,0 +1,8 @@
+# Never upload local secrets or scratch files when deploying from the CLI.
+.env
+.env.*
+!.env.example
+test-images/
+node_modules/
+dist/
+.astro/

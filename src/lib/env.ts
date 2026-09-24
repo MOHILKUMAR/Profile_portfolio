@@ -1,13 +1,11 @@
-import { env as workerEnv } from 'cloudflare:workers';
-
 /**
- * Astro 6 removed Astro.locals.runtime, so worker bindings and secrets now come
- * straight from the cloudflare:workers module. Locally, `astro dev` reads .env
- * through import.meta.env, so we check both and prefer the worker binding.
+ * On Vercel, variables set in the project settings are real process variables
+ * at runtime, so they are read fresh on every request. Locally, `astro dev`
+ * loads .env into import.meta.env rather than process.env, hence both.
  */
 export function readEnv(key: string): string | undefined {
-  const fromWorker = (workerEnv as unknown as Record<string, unknown> | undefined)?.[key];
-  if (typeof fromWorker === 'string' && fromWorker.length > 0) return fromWorker;
+  const fromProcess = typeof process !== 'undefined' ? process.env[key] : undefined;
+  if (typeof fromProcess === 'string' && fromProcess.length > 0) return fromProcess;
 
   const fromVite = (import.meta.env as unknown as Record<string, unknown>)[key];
   if (typeof fromVite === 'string' && fromVite.length > 0) return fromVite;
@@ -20,7 +18,7 @@ export function requireEnv(key: string): string {
   if (!value) {
     throw new Error(
       `Missing environment variable ${key}. Copy .env.example to .env for local dev, ` +
-        `or set it with "npx wrangler secret put ${key}" for production.`,
+        `or add it under Project Settings > Environment Variables on Vercel.`,
     );
   }
   return value;

@@ -1,14 +1,21 @@
 // @ts-check
 import { defineConfig, fontProviders } from 'astro/config';
 
-import cloudflare from '@astrojs/cloudflare';
+import vercel from '@astrojs/vercel';
 import tailwindcss from '@tailwindcss/vite';
+
+// Canonical and hreflang URLs are built from `site` at build time. Vercel
+// exposes the production domain to every build, previews included, so they
+// all point search engines at production even before PUBLIC_SITE_URL is set.
+const vercelProduction = process.env.VERCEL_PROJECT_PRODUCTION_URL;
 
 // https://astro.build/config
 export default defineConfig({
-  site: process.env.PUBLIC_SITE_URL || 'http://localhost:4321',
+  site:
+    process.env.PUBLIC_SITE_URL ||
+    (vercelProduction ? `https://${vercelProduction}` : 'http://localhost:4321'),
   output: 'server',
-  adapter: cloudflare(),
+  adapter: vercel(),
 
   i18n: {
     defaultLocale: 'en',
