@@ -1,6 +1,6 @@
 # Portfolio
 
-Personal portfolio built with Astro, backed by Supabase, deployed to Cloudflare Workers.
+Personal portfolio built with Astro, backed by Supabase, deployed to Vercel.
 
 - **System adapted dark mode.** Follows `prefers-color-scheme` by default, with a System / Light / Dark
   toggle that overrides it and persists per browser.
@@ -16,7 +16,7 @@ with a terracotta accent, defined once in `src/styles/global.css`.
 
 - Node 22.12 or newer
 - A Supabase project (free tier is enough)
-- A Cloudflare account, for deploying
+- A Vercel account, for deploying
 
 ## 1. Set up Supabase
 
@@ -56,8 +56,8 @@ verifier not found in storage". The template above carries a self-contained toke
 verifies directly, so the link works wherever you open it. It also skips a redirect hop through
 Supabase, which stops corporate link scanners from burning the one-time token before you click.
 
-`{{ .RedirectTo }}` is built from `PUBLIC_SITE_URL`, so the same template works locally and in
-production. If links arrive pointing at the wrong host, the redirect URL was not on the allow list and
+`{{ .RedirectTo }}` is built from `PUBLIC_SITE_URL`, or from the address the admin panel is open on when
+that is unset, so the same template works locally and in production. If links arrive pointing at the wrong host, the redirect URL was not on the allow list and
 Supabase fell back to the Site URL: recheck the step above.
 
 **Email sending limits.** Supabase's built-in sender only allows a few auth emails per hour and is meant
@@ -85,23 +85,31 @@ npm run dev
 
 The site is at http://localhost:4321 and the admin panel at http://localhost:4321/admin.
 
-## 3. Deploy to Cloudflare Workers
+## 3. Deploy to Vercel
 
-Fill in the `vars` block in [`wrangler.jsonc`](wrangler.jsonc) with the same values as your `.env`, but
-with `PUBLIC_SITE_URL` set to the production origin. Every value there is safe to commit. If you would
-rather not commit them, leave them empty and set them under **Workers & Pages > your worker > Settings >
-Variables** instead.
+The live site is the Vercel project `profile-portfolio`, currently at
+https://profile-portfolio-xi-teal.vercel.app.
+
+**Environment variables** live under **Project Settings > Environment Variables**, not in any file.
+`PUBLIC_SUPABASE_URL` and `PUBLIC_SUPABASE_ANON_KEY` are required. The contact and social ones from
+`.env.example` are optional, and their links stay hidden until set. Variables are read at build time
+too, so redeploy after changing one.
+
+`PUBLIC_SITE_URL` is optional on Vercel. Without it, canonical links use the project's production
+domain and sign-in links use whichever address the admin is on. Set it once you add a custom domain.
+
+**Deploy from this machine** (the CLI is linked through `.vercel/project.json`):
 
 ```bash
-npx wrangler login
-npm run deploy
+npx vercel deploy --prod
 ```
 
-After the first deploy, go back and make sure `PUBLIC_SITE_URL`, the Supabase **Site URL** and the
-Supabase **Redirect URLs** all point at the real origin. The magic link is built from `PUBLIC_SITE_URL`,
-so a stale value sends sign-in links to the wrong place.
+`.vercelignore` keeps `.env`, `.env.local` and `test-images/` out of the upload. `vercel link` also
+writes a `.env.local` holding a Vercel access token; it is gitignored and must stay that way.
 
-Re-run `npm run cf-typegen` after editing `wrangler.jsonc` to refresh `worker-configuration.d.ts`.
+**Allow sign-in on the live site.** In Supabase, add the production address to **Authentication > URL
+Configuration > Redirect URLs** (for example `https://profile-portfolio-xi-teal.vercel.app/**`).
+Without it, magic links from the live admin panel fall back to the Supabase Site URL.
 
 ## Using the admin panel
 
@@ -109,7 +117,8 @@ Re-run `npm run cf-typegen` after editing `wrangler.jsonc` to refresh `worker-co
 
 | Field | What it does |
 | --- | --- |
-| Title | Required. Also generates the URL slug if you leave that blank. |
+| Title | Required. Also generates the page address if you leave that blank. |
+| Page address | The short name in `/projects/<address>`. Not the live site link. |
 | Short description | Shown on the project cards and used as the page description. |
 | Full description | The body of the project page. Plain text, blank line between paragraphs. |
 | Live site URL | The "Visit site" button. `https://` is added if you leave it off. |
@@ -124,19 +133,15 @@ Deleting a project also deletes its uploaded photo.
 
 ## Caching
 
-`src/middleware.ts` puts `public, max-age=60, s-maxage=300, stale-while-revalidate=3600` on public
-pages. Practically, that means **an edit can take up to a minute to appear** on a page someone has
-already visited. Change `PUBLIC_CACHE` in that file if you want it tighter or looser.
+`src/middleware.ts` puts `public, max-age=0, s-maxage=60, stale-while-revalidate=600` on public pages.
+Vercel's CDN keeps each page for 60 seconds, browsers always check back with it, so **a published edit
+shows within about a minute**. You can watch it work in the `X-Vercel-Cache` response header: `MISS` on
+the first request, `HIT` after. Change `PUBLIC_CACHE` in that file if you want it tighter or looser.
 
-Two things are deliberately never cached: anything under `/admin` or `/api/` is `private, no-store`,
-and any response carrying a `Set-Cookie` is skipped, because a shared cache holding a refreshed session
-cookie would hand one visitor's login to the next.
-
-The `max-age` part works immediately in browsers. The `s-maxage` part does **not** do anything on its
-own: Cloudflare does not edge cache Worker responses by default. To turn that on you need a custom
-domain (not `*.workers.dev`) and a cache rule under **Caching > Cache Rules** with the action set to
-**Eligible for cache**. Without it you still get browser caching, which is most of the benefit for a
-portfolio.
+Three things are deliberately never cached: anything under `/admin` or `/api/` is `private, no-store`;
+any response carrying a `Set-Cookie` is skipped, because a shared cache holding a refreshed session
+cookie would hand one visitor's login to the next; and any page rendered after a failed Supabase read
+is `no-store`, so a brief outage is not served as "no projects" after the database recovers.
 
 `/robots.txt` and `/sitemap.xml` are generated at request time. The sitemap lists all three locales for
 every page plus every published project, with `hreflang` cross references so the translations are not
@@ -168,7 +173,7 @@ src/
   i18n/                Locale files and the t() helper
   layouts/             Base.astro (public), Admin.astro (admin)
   lib/
-    env.ts             Reads Cloudflare bindings, falls back to .env locally
+    env.ts             Reads process.env on Vercel, .env locally
     supabase.ts        Per request client, cookie backed sessions
     projects.ts        Queries, types, locale overlay
     projectForm.ts     Form parsing and image upload
@@ -193,7 +198,5 @@ policies enforce the same rule independently, so a bug in the middleware alone c
 | --- | --- |
 | `npm run dev` | Dev server at localhost:4321 |
 | `npm run build` | Production build into `dist/` |
-| `npm run preview` | Serve the build locally through workerd |
 | `npm run check` | Type check every Astro and TypeScript file |
-| `npm run deploy` | Build and deploy to Cloudflare Workers |
-| `npm run cf-typegen` | Regenerate `worker-configuration.d.ts` |
+| `npx vercel deploy --prod` | Deploy to production on Vercel |
