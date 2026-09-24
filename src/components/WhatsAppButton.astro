@@ -1,0 +1,49 @@
+---
+import { readEnv } from '../lib/env';
+import { useTranslations, type Locale } from '../i18n/utils';
+
+interface Props {
+  locale: Locale;
+  /** `button` for the contact section, `link` to sit among the footer links. */
+  variant?: 'button' | 'link';
+}
+
+const { locale, variant = 'button' } = Astro.props;
+const t = useTranslations(locale);
+
+// Only whether a number is configured reaches the page, never the number itself.
+const enabled = Boolean(readEnv('WHATSAPP_NUMBER'));
+---
+
+{
+  enabled && (
+    <form
+      method="post"
+      action="/api/contact/whatsapp"
+      target="_blank"
+      class="inline"
+    >
+      <input type="hidden" name="locale" value={locale} />
+      <button
+        type="submit"
+        class:list={[
+          'inline-flex items-center gap-2 transition-colors',
+          variant === 'button'
+            ? 'rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-accent-fg hover:bg-accent-hover'
+            : 'text-sm font-medium text-muted underline-offset-4 hover:text-accent hover:underline',
+        ]}
+      >
+        {variant === 'button' && (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4" aria-hidden="true">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 0 1-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+            />
+          </svg>
+        )}
+        {variant === 'button' ? t('contact.whatsapp') : 'WhatsApp'}
+      </button>
+    </form>
+  )
+}

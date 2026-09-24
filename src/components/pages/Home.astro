@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import ProjectCard from '../ProjectCard.astro';
+import WhatsAppButton from '../WhatsAppButton.astro';
 import { listPublishedProjects, localizeProject } from '../../lib/projects';
 import { readEnv } from '../../lib/env';
 import { localizePath, useTranslations, type Locale } from '../../i18n/utils';
@@ -23,6 +24,8 @@ const fallback = featured.length
 const projects = featured.length ? featured : fallback;
 const unavailable = Astro.locals.degraded;
 const email = readEnv('PUBLIC_CONTACT_EMAIL');
+const github = readEnv('PUBLIC_GITHUB_URL');
+const linkedin = readEnv('PUBLIC_LINKEDIN_URL');
 
 const stack = ['TypeScript', 'Astro', 'React', 'Node', 'Postgres', 'Supabase', 'Vercel', 'Tailwind'];
 ---
@@ -133,15 +136,43 @@ const stack = ['TypeScript', 'Astro', 'React', 'Node', 'Postgres', 'Supabase', '
   <section id="contact" class="mx-auto max-w-5xl scroll-mt-16 px-4 py-16 sm:px-6">
     <h2 class="text-2xl font-semibold tracking-tight text-fg">{t('contact.title')}</h2>
     <p class="mt-3 max-w-xl leading-relaxed text-muted">{t('contact.body')}</p>
-    {
-      email && (
-        <a
-          href={`mailto:${email}`}
-          class="mt-6 inline-block text-xl font-semibold text-accent underline-offset-4 hover:underline sm:text-2xl"
-        >
-          {email}
-        </a>
-      )
-    }
+
+    <div class="mt-6 flex flex-wrap items-center gap-x-6 gap-y-4">
+      <WhatsAppButton locale={locale} />
+      {
+        email && (
+          <a
+            href={`mailto:${email}`}
+            class="text-base font-semibold text-accent underline-offset-4 hover:underline"
+          >
+            {email}
+          </a>
+        )
+      }
+      {
+        linkedin && (
+          <a
+            href={linkedin}
+            target="_blank"
+            rel="noopener noreferrer me"
+            class="text-sm font-medium text-muted underline-offset-4 hover:text-accent hover:underline"
+          >
+            LinkedIn
+          </a>
+        )
+      }
+      {
+        github && (
+          <a
+            href={github}
+            target="_blank"
+            rel="noopener noreferrer me"
+            class="text-sm font-medium text-muted underline-offset-4 hover:text-accent hover:underline"
+          >
+            GitHub
+          </a>
+        )
+      }
+    </div>
   </section>
 </Base>

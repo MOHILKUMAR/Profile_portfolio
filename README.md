@@ -95,6 +95,11 @@ https://profile-portfolio-xi-teal.vercel.app.
 `.env.example` are optional, and their links stay hidden until set. Variables are read at build time
 too, so redeploy after changing one.
 
+`WHATSAPP_NUMBER` turns on the "Chat on WhatsApp" button. It is server only and stored as a sensitive
+variable: the button posts to `/api/contact/whatsapp`, which redirects into WhatsApp, so the number never
+appears in any page, script or in this repository. Keep it without a `PUBLIC_` prefix, which would
+bundle it into the site. WhatsApp itself still shows the number to anyone who opens the chat.
+
 `PUBLIC_SITE_URL` is optional on Vercel. Without it, canonical links use the project's production
 domain and sign-in links use whichever address the admin is on. Set it once you add a custom domain.
 

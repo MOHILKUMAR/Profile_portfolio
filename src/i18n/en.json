@@ -54,7 +54,7 @@
   "play.verdictSlow": "Room to improve. Blame the network.",
   "play.srStatus": "Reaction test status",
   "contact.title": "Get in touch",
-  "contact.body": "Have something you want built, or want to talk through an idea? Email is the fastest way to reach me.",
+  "contact.body": "Have something you want built, or want to talk through an idea? A WhatsApp message is the quickest way to reach me.",
   "contact.emailLabel": "Email",
   "theme.label": "Theme",
   "theme.system": "System",
@@ -71,5 +71,7 @@
   "notFound.cta": "Back to home",
   "work.unavailable": "Projects could not be loaded just now. Refresh in a moment.",
   "project.unavailableTitle": "Could not load this project",
-  "project.unavailableBody": "Something went wrong fetching it. Refresh in a moment."
+  "project.unavailableBody": "Something went wrong fetching it. Refresh in a moment.",
+  "contact.whatsapp": "Chat on WhatsApp",
+  "contact.whatsappMessage": "Hi Mohil, I came across your portfolio and would like to talk about a project."
 }

@@ -17,6 +17,8 @@ interface ImportMetaEnv {
   readonly PUBLIC_CONTACT_EMAIL: string;
   readonly PUBLIC_GITHUB_URL: string;
   readonly PUBLIC_LINKEDIN_URL: string;
+  /** Server only. Never prefix with PUBLIC_, that would ship it to the browser. */
+  readonly WHATSAPP_NUMBER: string;
 }
 
 interface ImportMeta {

@@ -1,4 +1,5 @@
 ---
+import WhatsAppButton from './WhatsAppButton.astro';
 import { readEnv } from '../lib/env';
 import { localizePath, useTranslations, type Locale } from '../i18n/utils';
 
@@ -19,6 +20,8 @@ const socials = [
   linkedin ? { label: 'LinkedIn', href: linkedin } : null,
   email ? { label: t('contact.emailLabel'), href: `mailto:${email}` } : null,
 ].filter((item): item is { label: string; href: string } => item !== null);
+
+const hasWhatsApp = Boolean(readEnv('WHATSAPP_NUMBER'));
 ---
 
 <footer class="border-t border-line bg-surface">
@@ -32,8 +35,8 @@ const socials = [
 
     <div class="flex flex-col gap-3 md:items-end">
       {
-        socials.length > 0 && (
-          <ul class="flex flex-wrap gap-4">
+        (socials.length > 0 || hasWhatsApp) && (
+          <ul class="flex flex-wrap items-center gap-4">
             {socials.map((social) => (
               <li>
                 <a
@@ -46,6 +49,11 @@ const socials = [
                 </a>
               </li>
             ))}
+            {hasWhatsApp && (
+              <li>
+                <WhatsAppButton locale={locale} variant="link" />
+              </li>
+            )}
           </ul>
         )
       }
