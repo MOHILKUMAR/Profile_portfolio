@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import ProjectCard from '../ProjectCard.astro';
 import WhatsAppButton from '../WhatsAppButton.astro';
+import EmailLink from '../EmailLink.astro';
 import { listPublishedProjects, localizeProject } from '../../lib/projects';
 import { readEnv } from '../../lib/env';
 import { localizePath, useTranslations, type Locale } from '../../i18n/utils';
@@ -139,16 +140,7 @@ const stack = ['TypeScript', 'Astro', 'React', 'Node', 'Postgres', 'Supabase', '
 
     <div class="mt-6 flex flex-wrap items-center gap-x-6 gap-y-4">
       <WhatsAppButton locale={locale} />
-      {
-        email && (
-          <a
-            href={`mailto:${email}`}
-            class="text-base font-semibold text-accent underline-offset-4 hover:underline"
-          >
-            {email}
-          </a>
-        )
-      }
+      {email && <EmailLink email={email} locale={locale} />}
       {
         linkedin && (
           <a

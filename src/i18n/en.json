@@ -1,7 +1,7 @@
 {
   "site.title": "Mohil Kumar",
-  "site.role": "Full stack developer",
-  "site.description": "Portfolio of Mohil Kumar, a full stack developer building fast, accessible web products.",
+  "site.role": "Software developer",
+  "site.description": "Portfolio of Mohil Kumar, a software developer building fast, accessible web products with React, Astro and Supabase.",
   "nav.home": "Home",
   "nav.work": "Work",
   "nav.play": "Play",
@@ -11,12 +11,12 @@
   "nav.skipToContent": "Skip to content",
   "hero.eyebrow": "Available for new work",
   "hero.title": "I build web products that stay fast under load.",
-  "hero.body": "Full stack developer working across TypeScript, Astro and Postgres. I care about the parts users feel: first paint, keyboard access, and pages that still work when the network does not.",
+  "hero.body": "Software developer at Wonkru Media in Gurugram, working across React, Astro, Node and Supabase. I care about the parts users feel: first paint, keyboard access, and pages that still work when the network does not.",
   "hero.ctaWork": "See the work",
   "hero.ctaContact": "Get in touch",
   "about.title": "About",
-  "about.body1": "I have spent the last few years shipping production web applications end to end, from schema design through to the deploy pipeline. Most of that work has been in small teams where the person writing the query is also the person answering for the page load time.",
-  "about.body2": "Outside of client work I write about performance budgets, build small tools I end up using every week, and keep a standing rule that nothing ships without a keyboard pass.",
+  "about.body1": "I am a software developer with close to two years of hands on experience. At Wonkru Media in Gurugram I build and maintain web applications with React, Astro and Tailwind CSS, and write REST APIs with Node, Express, MongoDB and Supabase.",
+  "about.body2": "Before that I spent eight months as a frontend developer intern at Wendor Innovations, building the inventory section of their web app. Outside work I build projects to learn new tools: this site runs on Astro and Supabase, and my YouTube clone is built with React 19.",
   "about.stackLabel": "Working with",
   "work.title": "Selected work",
   "work.subtitle": "Projects I have designed, built and shipped.",
@@ -73,5 +73,10 @@
   "project.unavailableTitle": "Could not load this project",
   "project.unavailableBody": "Something went wrong fetching it. Refresh in a moment.",
   "contact.whatsapp": "Chat on WhatsApp",
-  "contact.whatsappMessage": "Hi Mohil, I came across your portfolio and would like to talk about a project."
+  "contact.whatsappMessage": "Hi Mohil, I came across your portfolio and would like to talk about a project.",
+  "contact.emailSubject": "Project enquiry from your portfolio",
+  "contact.emailBody": "Hi Mohil,\n\nI came across your portfolio and would like to talk about a project.\n\n",
+  "contact.copy": "Copy",
+  "contact.copied": "Copied",
+  "contact.copyLabel": "Copy email address"
 }

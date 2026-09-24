@@ -1,0 +1,85 @@
+---
+import { mailtoHref } from '../lib/contact';
+import { useTranslations, type Locale } from '../i18n/utils';
+
+interface Props {
+  email: string;
+  locale: Locale;
+}
+
+const { email, locale } = Astro.props;
+const t = useTranslations(locale);
+---
+
+<span class="inline-flex items-center gap-2">
+  <a
+    href={mailtoHref(email, t)}
+    data-email-text
+    class="text-base font-semibold text-accent underline-offset-4 hover:underline"
+  >
+    {email}
+  </a>
+  {/* A mailto link does nothing on a computer with no mail app set up, which
+      is common for people who only use webmail. Copying works everywhere. */}
+  <button
+    type="button"
+    data-copy-email={email}
+    data-label-copy={t('contact.copy')}
+    data-label-copied={t('contact.copied')}
+    data-label-manual={t('contact.copyManual')}
+    aria-label={t('contact.copyLabel')}
+    class="rounded-md border border-line px-2 py-1 text-xs font-medium text-muted transition-colors hover:text-fg"
+  >
+    {t('contact.copy')}
+  </button>
+</span>
+
+<script>
+  /** Modern API first, then the older execCommand route some locked-down browsers still allow. */
+  async function copyText(text: string): Promise<boolean> {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // Refused: no permission, an embedded browser, or a strict privacy setting.
+    }
+    const scratch = document.createElement('textarea');
+    scratch.value = text;
+    scratch.setAttribute('readonly', '');
+    scratch.style.position = 'fixed';
+    scratch.style.opacity = '0';
+    document.body.appendChild(scratch);
+    scratch.select();
+    let copied = false;
+    try {
+      copied = document.execCommand('copy');
+    } catch {
+      copied = false;
+    }
+    scratch.remove();
+    return copied;
+  }
+
+  /** Last resort: highlight the address so the visitor can copy it themselves. */
+  function selectAddress(button: HTMLButtonElement) {
+    const link = button.parentElement?.querySelector('[data-email-text]');
+    const selection = window.getSelection();
+    if (!link || !selection) return;
+    const range = document.createRange();
+    range.selectNodeContents(link);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+
+  document.querySelectorAll<HTMLButtonElement>('[data-copy-email]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const ok = await copyText(button.dataset.copyEmail ?? '');
+      if (!ok) selectAddress(button);
+      // Never fail silently: always tell the visitor what happened.
+      button.textContent = ok ? (button.dataset.labelCopied ?? 'Copied') : (button.dataset.labelManual ?? 'Press Ctrl+C');
+      window.setTimeout(() => {
+        button.textContent = button.dataset.labelCopy ?? 'Copy';
+      }, ok ? 2000 : 4000);
+    });
+  });
+</script>

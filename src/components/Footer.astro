@@ -1,6 +1,7 @@
 ---
 import WhatsAppButton from './WhatsAppButton.astro';
 import { readEnv } from '../lib/env';
+import { mailtoHref } from '../lib/contact';
 import { localizePath, useTranslations, type Locale } from '../i18n/utils';
 
 interface Props {
@@ -18,7 +19,7 @@ const linkedin = readEnv('PUBLIC_LINKEDIN_URL');
 const socials = [
   github ? { label: 'GitHub', href: github } : null,
   linkedin ? { label: 'LinkedIn', href: linkedin } : null,
-  email ? { label: t('contact.emailLabel'), href: `mailto:${email}` } : null,
+  email ? { label: t('contact.emailLabel'), href: mailtoHref(email, t) } : null,
 ].filter((item): item is { label: string; href: string } => item !== null);
 
 const hasWhatsApp = Boolean(readEnv('WHATSAPP_NUMBER'));

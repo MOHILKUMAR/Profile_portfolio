@@ -74,5 +74,11 @@
   "project.unavailableTitle": "Could not load this project",
   "project.unavailableBody": "Something went wrong fetching it. Refresh in a moment.",
   "contact.whatsapp": "Chat on WhatsApp",
-  "contact.whatsappMessage": "Hi Mohil, I came across your portfolio and would like to talk about a project."
+  "contact.whatsappMessage": "Hi Mohil, I came across your portfolio and would like to talk about a project.",
+  "contact.emailSubject": "Project enquiry from your portfolio",
+  "contact.emailBody": "Hi Mohil,\n\nI came across your portfolio and would like to talk about a project.\n\n",
+  "contact.copy": "Copy",
+  "contact.copied": "Copied",
+  "contact.copyLabel": "Copy email address",
+  "contact.copyManual": "Press Ctrl+C"
 }
